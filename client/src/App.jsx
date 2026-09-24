@@ -9,10 +9,13 @@ function App() {
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:5000/api/recipes?search=${search}`
-        );
+        let url = `http://localhost:5000/api/recipes?search=${search}`;
 
+        if (sort) {
+          url += `&sort=${sort}&order=asc`;
+        }
+
+        const response = await fetch(url);
         const data = await response.json();
 
         setRecipes(data);
@@ -22,27 +25,7 @@ function App() {
     };
 
     fetchRecipes();
-  }, [search]);
-
-  const sortedRecipes = [...recipes].sort((a, b) => {
-    if (sort === "name") {
-      return a.name.localeCompare(b.name);
-    }
-
-    if (sort === "prep_time") {
-      return a.prep_time - b.prep_time;
-    }
-
-    if (sort === "difficulty") {
-      return a.difficulty - b.difficulty;
-    }
-
-    if (sort === "date_added") {
-      return new Date(b.date_added) - new Date(a.date_added);
-    }
-
-    return 0;
-  });
+  }, [search, sort]);
 
   return (
     <div>
@@ -66,13 +49,13 @@ function App() {
         <option value="date_added">Newest Added</option>
       </select>
 
-      <p>Showing {sortedRecipes.length} recipes</p>
+      <p>Showing {recipes.length} recipes</p>
 
-      {sortedRecipes.length === 0 ? (
+      {recipes.length === 0 ? (
         <p>No recipes found.</p>
       ) : (
         <ul>
-          {sortedRecipes.map((recipe) => (
+          {recipes.map((recipe) => (
             <li key={recipe.id}>
               <strong>{recipe.name}</strong> — {recipe.cuisine}
             </li>

@@ -16,22 +16,49 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/recipes", (req, res) => {
-  const { search } = req.query;
+  const { search, sort, order } = req.query;
 
-  if (!search) {
-    return res.json(recipes);
+  let results = [...recipes];
+
+  // Search by name or cuisine
+  if (search) {
+    const searchTerm = search.toLowerCase();
+
+    results = results.filter((recipe) => {
+      return (
+        recipe.name.toLowerCase().includes(searchTerm) ||
+        recipe.cuisine.toLowerCase().includes(searchTerm)
+      );
+    });
   }
 
-  const searchTerm = search.toLowerCase();
+  // Sort recipes
+  if (sort) {
+    results.sort((a, b) => {
+      let comparison = 0;
 
-  const filteredRecipes = recipes.filter((recipe) => {
-    return (
-      recipe.name.toLowerCase().includes(searchTerm) ||
-      recipe.cuisine.toLowerCase().includes(searchTerm)
-    );
-  });
+      if (sort === "name") {
+        comparison = a.name.localeCompare(b.name);
+      }
 
-  res.json(filteredRecipes);
+      if (sort === "prep_time") {
+        comparison = a.prep_time - b.prep_time;
+      }
+
+      if (sort === "difficulty") {
+        comparison = a.difficulty - b.difficulty;
+      }
+
+      if (sort === "date_added") {
+        comparison =
+          new Date(a.date_added) - new Date(b.date_added);
+      }
+
+      return order === "desc" ? -comparison : comparison;
+    });
+  }
+
+  res.json(results);
 });
 
 app.listen(PORT, () => {
