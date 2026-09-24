@@ -12,7 +12,8 @@ function App() {
         let url = `http://localhost:5000/api/recipes?search=${search}`;
 
         if (sort) {
-          url += `&sort=${sort}&order=asc`;
+          const order = sort === "date_added" ? "desc" : "asc";
+          url += `&sort=${sort}&order=${order}`;
         }
 
         const response = await fetch(url);
@@ -54,13 +55,34 @@ function App() {
       {recipes.length === 0 ? (
         <p>No recipes found.</p>
       ) : (
-        <ul>
-          {recipes.map((recipe) => (
-            <li key={recipe.id}>
-              <strong>{recipe.name}</strong> — {recipe.cuisine}
-            </li>
-          ))}
-        </ul>
+        <div className="recipe-list">
+  {recipes.map((recipe) => (
+    <article className="recipe-card" key={recipe._id}>
+      <h2>{recipe.name}</h2>
+
+      <p>
+        <strong>Cuisine:</strong> {recipe.cuisine}
+      </p>
+
+      <p>
+        <strong>Prep Time:</strong> {recipe.prep_time} minutes
+      </p>
+
+      <p>
+        <strong>Difficulty:</strong> {recipe.difficulty}/5
+      </p>
+
+      <p>
+        <strong>Servings:</strong> {recipe.servings}
+      </p>
+
+      <p>
+        <strong>Date Added:</strong>{" "}
+        {new Date(recipe.date_added).toLocaleDateString()}
+      </p>
+    </article>
+  ))}
+</div>
       )}
     </div>
   );
