@@ -16,7 +16,22 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/recipes", (req, res) => {
-  res.json(recipes);
+  const { search } = req.query;
+
+  if (!search) {
+    return res.json(recipes);
+  }
+
+  const searchTerm = search.toLowerCase();
+
+  const filteredRecipes = recipes.filter((recipe) => {
+    return (
+      recipe.name.toLowerCase().includes(searchTerm) ||
+      recipe.cuisine.toLowerCase().includes(searchTerm)
+    );
+  });
+
+  res.json(filteredRecipes);
 });
 
 app.listen(PORT, () => {
