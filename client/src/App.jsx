@@ -4,6 +4,7 @@ import "./App.css";
 function App() {
   const [recipes, setRecipes] = useState([]);
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("");
 
   useEffect(() => {
     const fetchRecipes = async () => {
@@ -23,6 +24,26 @@ function App() {
     fetchRecipes();
   }, [search]);
 
+  const sortedRecipes = [...recipes].sort((a, b) => {
+    if (sort === "name") {
+      return a.name.localeCompare(b.name);
+    }
+
+    if (sort === "prep_time") {
+      return a.prep_time - b.prep_time;
+    }
+
+    if (sort === "difficulty") {
+      return a.difficulty - b.difficulty;
+    }
+
+    if (sort === "date_added") {
+      return new Date(b.date_added) - new Date(a.date_added);
+    }
+
+    return 0;
+  });
+
   return (
     <div>
       <h1>Recipe Box</h1>
@@ -34,13 +55,24 @@ function App() {
         onChange={(event) => setSearch(event.target.value)}
       />
 
-      <p>Showing {recipes.length} recipes</p>
+      <select
+        value={sort}
+        onChange={(event) => setSort(event.target.value)}
+      >
+        <option value="">Sort recipes...</option>
+        <option value="name">Name A–Z</option>
+        <option value="prep_time">Shortest Prep Time</option>
+        <option value="difficulty">Easiest First</option>
+        <option value="date_added">Newest Added</option>
+      </select>
 
-      {recipes.length === 0 ? (
+      <p>Showing {sortedRecipes.length} recipes</p>
+
+      {sortedRecipes.length === 0 ? (
         <p>No recipes found.</p>
       ) : (
         <ul>
-          {recipes.map((recipe) => (
+          {sortedRecipes.map((recipe) => (
             <li key={recipe.id}>
               <strong>{recipe.name}</strong> — {recipe.cuisine}
             </li>
