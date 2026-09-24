@@ -1,7 +1,10 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
+const mongoose = require("mongoose");
 
-const { recipes } = require("./data");
+const Recipe = require("./models/Recipe");
 
 const app = express();
 const PORT = 5000;
@@ -15,52 +18,67 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/api/recipes", (req, res) => {
-  const { search, sort, order } = req.query;
+app.get("/api/recipes", async (req, res) => {
+  try {
+    const { search, sort, order } = req.query;
 
-  let results = [...recipes];
+    const filter = {};
 
-  // Search by name or cuisine
-  if (search) {
-    const searchTerm = search.toLowerCase();
+    // Search by name or cuisine
+    if (search) {
+      filter.$or = [
+        {
+          name: {
+            $regex: search,
+            $options: "i"
+          }
+        },
+        {
+          cuisine: {
+            $regex: search,
+            $options: "i"
+          }
+        }
+      ];
+    }
 
-    results = results.filter((recipe) => {
-      return (
-        recipe.name.toLowerCase().includes(searchTerm) ||
-        recipe.cuisine.toLowerCase().includes(searchTerm)
-      );
+    let query = Recipe.find(filter);
+
+    // Sort recipes
+    const sortFields = {
+      name: "name",
+      prep_time: "prep_time",
+      difficulty: "difficulty",
+      date_added: "date_added"
+    };
+
+    if (sortFields[sort]) {
+      query = query.sort({
+        [sortFields[sort]]: order === "desc" ? -1 : 1
+      });
+    }
+
+    const results = await query;
+
+    res.json(results);
+  } catch (error) {
+    console.error("Error fetching recipes:", error);
+
+    res.status(500).json({
+      error: "Failed to fetch recipes."
     });
   }
+});
 
-  // Sort recipes
-  if (sort) {
-    results.sort((a, b) => {
-      let comparison = 0;
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("MongoDB connected");
 
-      if (sort === "name") {
-        comparison = a.name.localeCompare(b.name);
-      }
-
-      if (sort === "prep_time") {
-        comparison = a.prep_time - b.prep_time;
-      }
-
-      if (sort === "difficulty") {
-        comparison = a.difficulty - b.difficulty;
-      }
-
-      if (sort === "date_added") {
-        comparison =
-          new Date(a.date_added) - new Date(b.date_added);
-      }
-
-      return order === "desc" ? -comparison : comparison;
+    app.listen(PORT, () => {
+      console.log(`Recipe Box API running on http://localhost:${PORT}`);
     });
-  }
-
-  res.json(results);
-});
-
-app.listen(PORT, () => {
-  console.log(`Recipe Box API running on http://localhost:${PORT}`);
-});
+  })
+  .catch((error) => {
+    console.error("MongoDB connection error:", error);
+  });
